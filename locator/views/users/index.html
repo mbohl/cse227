@@ -12,16 +12,16 @@
 				data: {"id": id, "lon": lon, "lat": lat, "dst": dst}, 
 				dataType: "json", success: function generateMap(data) {
 					// Generate HTML to inject map at div 
-					console.log(data);
+				//	console.log(data);
+					$("#tri-" + id).replaceWith(JSON.stringify(data));
 				}
 			});
-			var val = "<div id='tri-" + id +"'>" + id + ", " + lat + ", " + lon + ", " + dst + "</div>";
-			console.log(val);
-			$("#tri-" + id).replaceWith(val);
 
 		}
 
 		function useMyLocation() {
+
+			console.log("Trying to get location");
 			
 			    if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(function showPosition(position) {
@@ -31,7 +31,14 @@
 					document.getElementById('longitude').value = position.coords.longitude;
 
 				});
-			    } 
+			    } else {
+				console.log("Unable to get location");
+				document.getElementById('latitude').value = 32.583495;
+				document.getElementById('longitude').value = -116.79698;
+				}
+				//document.getElementById('latitude').value = 32.583495;
+				//document.getElementById('longitude').value = -116.79698;
+					 
 		}
 
 		function createUserTable(JSONObject) {
@@ -46,11 +53,10 @@
 			    peopleHTML += "<td>" + JSONObject.location[key]["updated_at"] + "</td>";
 			    peopleHTML += "<td>" + JSONObject.location[key]["dst"] + "</td>";
 			  peopleHTML += "</tr>";
-			    peopleHTML += "<tr ><td colspan='4'><div id='tri-" + JSONObject.location[key]["id"] + "'></div></td></tr>";
+			    peopleHTML += "<tr ><td colspan='4' bgcolor='#CCCCCC'><div id='tri-" + JSONObject.location[key]["id"] + "'></div></td></tr>";
 			}
 		      }
 			peopleHTML += "</table>";
-			console.log(peopleHTML);
 			$("#user-list").replaceWith(peopleHTML);	
 			document.getElementById('latitude').value = JSONObject.latitude;
 			document.getElementById('longitude').value = JSONObject.longitude;

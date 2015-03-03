@@ -4,6 +4,11 @@
  
 // Requires the Mathjs library - http://mathjs.org/
 var math = require('mathjs')
+
+math.config({
+  number: 'bignumber', // Default type of number: 'number' (default) or 'bignumber'
+  precision: 64        // Number of significant digits for BigNumbers
+});
  
 /**
  * Represents a coordinate with a distance

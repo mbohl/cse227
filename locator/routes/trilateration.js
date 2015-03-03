@@ -1,13 +1,15 @@
 var express = require('express');
 var trilateration = require('../model/trilateration');
+var scruff = require('../model/scruff');
 var router = express.Router();
 
 router.get('/', function(req, res) {
   res.render('trilateration/index.html', { title: 'CSE 227 Project - Trilateration' });
 });
 
-
 router.post('/', function(req, res) {
+
+// resutls from scruff are in meters, utility expects km
 
   // For given location and user id, pull three distances
   var lon1 = 0;
@@ -19,34 +21,54 @@ router.post('/', function(req, res) {
   var dst1 = 0;
   var dst2 = 0;
   var dst3 = 0;
+  var beacon1, beacon2, beacon3;
   var result;
 
-	lon1 = Number(req.body.lon);
-	lat1 = Number(req.body.lat);
-	dst1 = Number(req.body.dst);
+	// Somewhere in Pacific Ocean
+	lat1 = 32.900258;
+	lon1 = -117.508279;
 
-	lon2 = lon1 + .008;
-	lat2 = lat1 + .008;
-	dst2 = dst1 + 500;
+	// N SD County
+	lat2 = 33.236039;
+	lon2 = -117.064772;
 
-	lon3 = lon1 + .001;
-	lat3 = lat1 + .001;
-	dst3 = dst1 + 200;
+	// S SD County
+	lat3 = 32.583495;
+	lon3 = -116.796980;
 
-  // Start Calculation
-  var beacons = [ new trilateration.Beacon(35.000000, -120.000000, 189.419265289145) , new trilateration.Beacon(35.000005, -120.000010, 189.420325082156) , new trilateration.Beacon(35.000000, -120.000020, 189.420689733286) ];
- 
-  console.log('ready to go');
-  var pos = trilateration.trilaterate(beacons);
+       	scruff.getUser({"lat": lat1, "lon": lon1}, req.body.id, function callback(err,data) { 
+		console.log("Distance 2: " + JSON.stringify(data.results[0].dst));
+		dst1 = Number(JSON.stringify(data.results[0].dst)) / 1000;
+		beacon1 = new trilateration.Beacon(lat1, lon1, dst1);
 
-  result = {"location1": { "lat": lat1, "lon": lon1, "dst": dst1},
-  	    "location2": { "lat": lat2, "lon": lon2, "dst": dst2},
-            "location3": { "lat": lat3, "lon": lon3, "dst": dst3},
-            "position" : { "lat": pos[0], "lon": pos[1], "dst": 0}}
+		scruff.getUser({"lat": lat2, "lon": lon2}, req.body.id, function callback(err,data) { 
+			console.log("Distance 2: " + JSON.stringify(data.results[0].dst));
+			dst2 = Number(JSON.stringify(data.results[0].dst)) / 1000;
+			beacon2 = new trilateration.Beacon(lat2, lon2, dst2);
 
-  console.log(result);
+			scruff.getUser({"lat": lat3, "lon": lon3}, req.body.id, function callback(err,data) { 
+				console.log("Distance 3: " + JSON.stringify(data.results[0].dst));
+				dst3 = Number(JSON.stringify(data.results[0].dst)) / 1000;
+				beacon3 = new trilateration.Beacon(lat3, lon3, dst3);
+				  console.log('ready to go');
+				  console.log(beacon1);
+				  console.log(beacon2);
+				  console.log(beacon3);
 
-  res.send(JSON.stringify(result));
+				  var pos = trilateration.trilaterate([beacon1, beacon2, beacon3]);
+
+			  result = {"location1": { "lat": lat1, "lon": lon1, "dst": dst1},
+				    "location2": { "lat": lat2, "lon": lon2, "dst": dst2},
+				    "location3": { "lat": lat3, "lon": lon3, "dst": dst3},
+				    "position" : { "lat": pos[0], "lon": pos[1]}};
+
+			  console.log("Results:");
+			  console.log(result);
+		
+			  res.send(JSON.stringify(result));
+			});
+		});
+	});
 
 });
 

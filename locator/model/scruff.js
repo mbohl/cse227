@@ -30,7 +30,6 @@ exports.getUsersNearby = function(loc, count, cb) {
  
             // pass the relevant data back to the callback
 	    // reparse to shrink?
-	    console.log(parsed);
             cb(null, parsed);
         });
     }).on('error', function(err) {
@@ -45,6 +44,7 @@ exports.getUser = function(loc, id, cb) {
 
 	//http://app.scruffapp.com/app/profile?target=100325809&longitude=-117.275625&client_version=4.7017&latitude=32.846736&device_type=1
  
+    console.log("Looking for user " + id);
     http.get({
         host: 'app.scruffapp.com',
         path: '/app/profile?target=' + id + '&longitude=' + loc.lon + '&client_version=4.7017&latitude=' + loc.lat + '&device_type=1'
@@ -61,7 +61,7 @@ exports.getUser = function(loc, id, cb) {
         // do whatever we want with the response once it's done
         res.on('end', function() {
             try {
-		console.error(body);
+		//console.error(body);
                 var parsed = JSON.parse(body);
             } catch (err) {
                 console.error('Unable to parse response as JSON', err);
@@ -70,7 +70,6 @@ exports.getUser = function(loc, id, cb) {
  
             // pass the relevant data back to the callback
 	    // reparse to shrink?
-	    console.log(parsed);
             cb(null, parsed);
         });
     }).on('error', function(err) {
