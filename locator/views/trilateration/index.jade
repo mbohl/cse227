@@ -1,0 +1,41 @@
+extends ../map-layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+  a(href='/') Home
+  br/
+  div(id='map-canvas', width='300', height='300') 
+  br/
+  div
+  form(action='/trilateration',method='post')
+    div(data-role='fieldcontain')
+      fieldset(data-role='controlgroup')
+        label(for='lon_1') Longitude 1
+           input(id='lon_1',type='text',name='lon_1', value='-117.242062')
+      fieldset(data-role='controlgroup')
+        label(for='lat_1') Lattitude 1
+           input(id='lat_1',type='text',name='lat_1', value='32.86')
+      fieldset(data-role='controlgroup')
+        label(for='dist_1') Distance 1
+           input(id='dist_1',type='text',name='dist_1', value='37.805112385428544')
+      fieldset(data-role='controlgroup')
+        label(for='lon_2') Longitude 2
+           input(id='lon_2',type='text',name='lon_2', value='-117.242062')
+      fieldset(data-role='controlgroup')
+        label(for='lat_2') Lattitude 2
+           input(id='lat_2',type='text',name='lat_2', value='32.864000')
+      fieldset(data-role='controlgroup')
+        label(for='dist_2') Distance 2
+           input(id='dist_2',type='text',name='dist_2', value='64.17197020074501')
+      fieldset(data-role='controlgroup')
+        label(for='lon_3') Longitude 3
+           input(id='lon_3',type='text',name='lon_3', value='-117.241161')
+      fieldset(data-role='controlgroup')
+        label(for='lat_3') Lattitude 3
+           input(id='lat_3',type='text',name='lat_3', value='32.865491')
+      fieldset(data-role='controlgroup')
+        label(for='dist_3') Distance 3
+           input(id='dist_3',type='text',name='dist_3', value='122.33794506716576')
+      input(type='submit',value='Trilaterate',data-transition='fade', data-theme='c')
+

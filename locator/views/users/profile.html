@@ -1,0 +1,62 @@
+<html>
+	<head>
+		<title>Scruff Users</title>
+		<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+		<script type="text/javascript">
+
+		function useMyLocation() {
+			
+			    if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(function showPosition(position) {
+					console.log("Got location: " + position);
+
+					document.getElementById('latitude').value = position.coords.latitude;
+					document.getElementById('longitude').value = position.coords.longitude;
+
+				});
+			    } 
+		}
+
+		function createUserTable(JSONObject) {
+			var peopleHTML = "<table id='user-list'>";
+			peopleHTML += "<th>Name</th><th>id</th><th>logged in</th><th>updated at</th><th>distance</th>";
+		      // Loop through Object and create peopleHTML
+		      for (var key in JSONObject.location) {
+			if (JSONObject.location.hasOwnProperty(key)) {
+			  peopleHTML += "<tr>";
+			    peopleHTML += "<td>" + JSONObject.location[key]["name"] + "</td>";
+			    peopleHTML += "<td>" + JSONObject.location[key]["id"] + "</td>";
+			    peopleHTML += "<td>" + JSONObject.location[key]["logged_in"] + "</td>";
+			    peopleHTML += "<td>" + JSONObject.location[key]["updated_at"] + "</td>";
+			    peopleHTML += "<td>" + JSONObject.location[key]["dst"] + "</td>";
+			  peopleHTML += "</tr>";
+			}
+		      }
+			peopleHTML += "</table>";
+			$("#user-list").replaceWith(peopleHTML);	
+			document.getElementById('latitude').value = JSONObject.latitude;
+			document.getElementById('longitude').value = JSONObject.longitude;
+		}
+
+		function initialize() {
+			console.log("Initializing");
+			var url = "/users/";
+			jQuery.ajax( {type: "GET", url: url, dataType: "json", success: createUserTable});
+		};
+
+		function update() {
+			var url = "/users/" +  document.getElementById('latitude').value + "," + document.getElementById('longitude').value;
+			console.log("Updating: " + url);
+			jQuery.ajax( {type: "GET", url: url, dataType: "json", success: createUserTable});
+		};
+		</script>
+	</head>
+	<body>
+		<h1>Users</h1>
+		<input type="text" id="latitude" name="latitude">
+		<input type="text" id="longitude" name-"longitude">
+		<input type="submit" action="submit" onclick="update()"> 
+		<input type="submit" value="Use My Location" onclick="useMyLocation()" > 
+		<div id="user-list"></div>
+	</body>
+</html>
