@@ -1,0 +1,242 @@
+<html>
+	<head>
+		<title>YoCutie</title>
+		<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZSwB3Bcva7gmLMGE6VYNs_AtvMvyWwJs" type="text/javascript"></script>
+		
+		<script type="text/javascript">
+
+		var session_id = null;
+		var latitude = null;
+		var longitude = null;
+
+
+		function authorize(gender) {
+			var url = "/yocutie/auth/" + gender;
+			console.log("Attempting Authoriztation: " + url);
+			jQuery.ajax( {type: "GET", url: url, dataType: "json", success: function(JSONObject) {
+				session_id = JSONObject.session_id;	
+				console.log("Got session id: " + session_id);
+			}});
+		
+		};
+
+
+		function setLocation(callback) {
+
+			if (session_id == null)  {
+				authorize();
+			}
+
+			if (latitude == null || longitude == null) {
+				useMyLocation();
+			}
+
+			var url = "/yocutie/setlocation/" + session_id + "," + latitude + "," + longitude;
+			console.log("Setting location on server with URL: " + url);
+			jQuery.ajax( {type: "GET", url: url, dataType: "json", success: function(JSONObject) {
+				console.log(JSONObject);
+				if(typeof callback === "function") {
+					callback();
+				}
+			}});
+		}
+			
+
+		function getProfileDistance(id, callback) {
+			if (session_id == null)  {
+				authorize();
+			}
+
+			var url = "/yocutie/profile/" + id + "," + session_id;
+			console.log("Looking for location for a user: " + url);
+			jQuery.ajax( {type: "GET", url: url, dataType: "json", success: function(JSONObject) {
+				console.log("Distance for " + id + " is " + JSONObject.distance);
+				callback(JSONObject.distance);
+			}});
+		}
+			
+
+		function showMap(id) {
+			
+
+			/*
+				Make three requests, each one doing:
+				1) set and remember location
+				2) retrieve user profile distance
+
+				Once three locations and distances are done, trilaterate and map
+
+			*/
+
+			// Somewhere in Pacific Ocean
+			var lat1 = 32.900258;
+			var lon1 = -117.508279;
+			var dist1;
+
+			
+			// Middle of Nevada
+			lat1 = 41.389929;
+			lon1 = -115.651390;
+
+
+			// N SD County
+			var lat2 = 33.236039;
+			var lon2 = -117.064772;
+
+			// Chad, in africa
+			lat2 = 18.221886;
+			lon2 = 18.361465;
+
+			var dist2;
+
+			// S SD County
+			var lat3 = 32.583495;
+			var lon3 = -116.796980;
+
+
+			// Russia
+			lat3 = 60.496655;
+			lon3 = 58.285780 ;
+
+			var dist3;
+
+			latitude = lat1;
+			longitude = lon1;
+			setLocation( function() { 
+
+			getProfileDistance(id, function(distance) {
+				dist1 = distance;	
+
+				latitude = lat2;
+				longitude = lon2;
+				setLocation( function() {
+				getProfileDistance(id, function(distance2) {
+					dist2 = distance2;
+
+					latitude = lat3;
+					longitude = lon3;
+					setLocation(function() {
+					getProfileDistance(id, function(distance3) {
+						dist3 = distance3;
+
+
+						var postData = {
+							"lat1": lat1,
+							"lon1": lon1,
+							"dst1": dist1,
+							"lat2": lat2,
+							"lon2": lon2,
+							"dst2": dist2,
+							"lat3": lat3,
+							"lon3": lon3,
+							"dst3": dist3
+						};
+
+						console.log("Sending request for trilateration: " + JSON.stringify(postData));
+						jQuery.ajax( { 
+							type: "POST", 
+							url: '/yocutie/trilaterate', 
+							data: postData,
+							dataType: "json", success: function(data) {
+								console.log("Tralateration Response: " + JSON.stringify(data));
+
+								var mapOptions = {
+									zoom: 12,
+									center: new google.maps.LatLng(data.lat, data.lon)
+								};
+
+								var map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+								var marker = new google.maps.Marker ( {
+									position: new google.maps.LatLng(data.lat, data.lon),
+									map: map
+								});
+								google.maps.event.trigger(map, 'resize');
+								google.maps.event.addDomListener(window, 'load', null);
+							}
+						});
+
+					});
+					});
+
+				});
+				});
+
+			});
+			});
+
+		}
+
+		function useMyLocation() {
+
+			console.log("Trying to get location");
+
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(function showPosition(position) {
+					console.log("Got location: " + position);
+					latitude = position.coords.latitude;
+					longitude = position.coords.longitude;
+					document.getElementById('latitude').value = latitude;
+					document.getElementById('longitude').value = longitude;
+
+				});
+			} else {
+				console.log("Unable to get location");
+				document.getElementById('latitude').value = 32.583495;
+				document.getElementById('longitude').value = -116.79698;
+			}
+					 
+		}
+
+		function createUserTable(JSONObject) {
+
+			var peopleHTML = "<table border='0' id='user-list'>";
+			peopleHTML += "<th>Name</th><th>id</th><th>distance (meters)</th>";
+		      // Loop through Object and create peopleHTML
+		      for (var key in JSONObject.profiles) {
+			if (JSONObject.profiles.hasOwnProperty(key)) {
+				
+			  peopleHTML += "<tr>";
+			    peopleHTML += "<td><a href='#' onclick='showMap(" + JSONObject.profiles[key]["id"] + ");'>" +  JSONObject.profiles[key]["nickname"] + "</a></td>";
+			    peopleHTML += "<td>" + JSONObject.profiles[key]["id"] + "</td>";
+			    peopleHTML += "<td>" + JSONObject.profiles[key]["distance"] + "</td>";
+			  peopleHTML += "</tr>";
+			    //peopleHTML += "<tr ><td colspan='3' bgcolor='#CCCCCC'><div  width='100%' height='100%' id='map'></div></td></tr>";
+			}
+		      }
+			peopleHTML += "</table>";
+			$("#user-list").replaceWith(peopleHTML);	
+		}
+
+		function update() {
+
+			if (session_id == null)  {
+				authorize();
+			}
+
+			if (latitude == null || longitude == null) {
+				useMyLocation();
+			}
+
+			setLocation();
+
+			var url = "/yocutie/findnearby/500," + session_id;
+
+			console.log("Updating: " + url);
+			jQuery.ajax( {type: "GET", url: url, dataType: "json", success: createUserTable});
+		};
+		</script>
+	</head>
+	<body>
+		<h1>YoCute Users Nearby</h1>
+		<input type="text" id="latitude" name="latitude">
+		<input type="text" id="longitude" name-"longitude" >
+		<input type="submit" action="submit" onclick="update()"> 
+		<input type="submit" value="Use My Location" onclick="useMyLocation()" > 
+		<input type="submit" value="Authorize" onclick="authorize('male')" > 
+		<div id="map" style="width: 500px; height: 300px"></div>
+		<div id="user-list"></div>
+			
+	</body>
+</html>

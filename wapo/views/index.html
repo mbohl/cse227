@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style type="text/css">
+		html, body, #map-canvas { height: 100%; margin: 0; padding: 0;}
+	</style>
+	<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZSwB3Bcva7gmLMGE6VYNs_AtvMvyWwJs"></script>
+	<script type="text/javascript" src="http://google-maps-utility-library-v3.googlecode.com/svn/tags/markerwithlabel/1.1.9/src/markerwithlabel.js"></script>
+	<script type="text/javascript">
+
+	function initialize() {
+
+
+		var mapOptions = {
+		  center: { lat: 32.880883, lng: -117.237581},
+		  zoom: 14
+		};
+
+		var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+		// Pull users from server
+		jQuery.ajax( { type: "GET", url: "/wapo/trilaterate", dataType: "json", success: function (result) {
+			console.log("Retrieved " + result.length + " results");
+			//for(i = 0; i < result.length; i++) {
+			for(i = 0; i < 10; i++) {
+				if ( result[i]["Done"] == 3 ) {
+					console.log("Adding marker for " + result[i]["Username"] + " at " + result[i]["Lat"] +","+ result[i]["Lon"]);
+					/*
+					var marker = new google.maps.Marker ( {
+						position: new google.maps.LatLng(result[i]["Lat"], result[i]["Lon"]),
+						map: map
+					});
+					*/
+					var marker = new MarkerWithLabel ( {
+						position: new google.maps.LatLng(result[i]["Lat"], result[i]["Lon"]),
+						draggable: false,
+						map: map,
+						labelContent: result[i]["Username"].trim()
+					});
+
+					if (result[i]["Username"] == "schoolman227" ) {
+						console.log("LatA = " + result[i]["Lat1"]); 
+						console.log("LonA = " + result[i]["Lon1"])
+						console.log("DistA = " + result[i]["Dst1"]);
+						console.log("LatB = " + result[i]["Lat2"]); 
+						console.log("LonB = " + result[i]["Lon2"])
+						console.log("DistB = " + result[i]["Dst2"]);
+						console.log("LatC = " + result[i]["Lat3"]); 
+						console.log("LonC = " + result[i]["Lon3"])
+						console.log("DistC = " + result[i]["Dst3"]);
+						console.log("Restult: " + result[i]["Lat"] + "," + result[i]["Lon"]);
+					}
+
+					/*
+					var contentString = JSON.stringify(result[i]);
+					var infowindow = new google.maps.InfoWindow({
+						content: contentString
+					});
+
+					google.maps.event.addListener(marker, 'click', function() {
+						infowindow.open(map,marker);
+					});
+					*/
+				}
+			}
+
+			google.maps.event.trigger(map, 'resize');
+		}});
+
+	};
+
+	google.maps.event.addDomListener(window, 'load', initialize);
+
+	</script>
+	</head>
+<body>
+	<div id="map-canvas"></div>
+</body>
+</html>
